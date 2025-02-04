@@ -72,7 +72,6 @@ class PostController extends Controller
         $ipAddress = $request->ip();
         $cacheKey = "post_view_{$post->id}_{$ipAddress}";
 
-
         if (!Cache::has($cacheKey)) {
             $post->increment('views_count');
             Cache::put($cacheKey, true, now()->addDays(3));

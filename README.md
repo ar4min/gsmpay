@@ -16,7 +16,7 @@ This project is a **Laravel 11** based backend for GSMPay, implementing features
 
 ---
 
-## ⚙️ Setup Instructions
+## Setup Instructions
 
 1. **Clone the Repository**
 
