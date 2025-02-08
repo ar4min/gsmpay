@@ -17,61 +17,62 @@ class PostTest extends TestCase
         $token = auth('api')->login($user);
 
         return [
+            'user' => $user,
             'Authorization' => "Bearer $token",
-            'user' => $user
         ];
     }
 
-    /** @test */
-    public function authenticated_user_can_create_a_post()
-    {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
-
-        $response = $this->postJson('/api/posts', [
-            'title' => 'Test Post',
-            'body' => 'This is a test post body.',
-        ]);
-
-
-        $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'title', 'body', 'views_count']);
-    }
-
-    /** @test */
-    public function authenticated_user_can_get_their_posts()
+    public function test_authenticated_user_can_list_his_posts()
     {
         $auth = $this->authenticate();
-        Post::factory(3)->create(['user_id' => $auth['user']->id]);
+
+        Post::factory(3)->create([
+            'user_id' => $auth['user']->id
+        ]);
 
         $response = $this->withHeader('Authorization', $auth['Authorization'])
             ->getJson('/api/posts');
 
         $response->assertStatus(200)
-            ->assertJsonCount(3);
+            ->assertJsonStructure(['data', 'server_time'])
+            ->assertJsonCount(3, 'data');
     }
 
-    /** @test */
-    public function views_count_should_increase_when_post_is_viewed()
+    public function test_authenticated_user_can_create_post()
     {
         $auth = $this->authenticate();
-        $post = Post::factory()->create(['user_id' => $auth['user']->id]);
 
+        $response = $this->withHeader('Authorization', $auth['Authorization'])
+            ->postJson('/api/posts', [
+                'title' => 'New Post',
+                'body'  => 'Post Body'
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure(['data' => ['id', 'title', 'body', 'views_count'], 'server_time']);
+    }
+
+    public function test_views_count_should_increase_only_once_per_ip()
+    {
+        $auth = $this->authenticate();
+
+        $post = Post::factory()->create(['user_id' => $auth['user']->id]);
         $this->withHeader('Authorization', $auth['Authorization'])
-            ->getJson("/api/posts/{$post->id}");
+            ->getJson("/api/posts/{$post->id}")
+            ->assertStatus(200);
 
         $this->assertDatabaseHas('posts', [
-            'id' => $post->id,
+            'id'          => $post->id,
             'views_count' => 1
         ]);
 
         $this->withHeader('Authorization', $auth['Authorization'])
-            ->getJson("/api/posts/{$post->id}");
+            ->getJson("/api/posts/{$post->id}")
+            ->assertStatus(200);
 
         $this->assertDatabaseHas('posts', [
-            'id' => $post->id,
+            'id'          => $post->id,
             'views_count' => 1
         ]);
     }
 }
-

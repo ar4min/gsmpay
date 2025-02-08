@@ -12,7 +12,7 @@
                     "Posts"
                 ],
                 "summary": "ایجاد یک پست جدید",
-                "operationId": "e65ec23954b56b8ece120e19fd94fe87",
+                "operationId": "8944a44e3aa2b4a5b2847e9e40e73b4c",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -27,9 +27,9 @@
                                         "type": "string",
                                         "example": "Test Post"
                                     },
-                                    "content": {
+                                    "body": {
                                         "type": "string",
-                                        "example": "This is a test content."
+                                        "example": "This is a test body."
                                     }
                                 },
                                 "type": "object"
@@ -52,7 +52,7 @@
                                             "type": "string",
                                             "example": "Test Post"
                                         },
-                                        "content": {
+                                        "body": {
                                             "type": "string",
                                             "example": "This is a test content."
                                         },

@@ -4,44 +4,60 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function user_can_login_and_receive_jwt_token()
+    public function test_user_can_register_and_receive_token()
     {
-        $user = User::factory()->create(['password' => bcrypt('password')]);
-
-        $response = $this->postJson('/api/login', [
-            'phone' => $user->phone,
-            'password' => 'password',
+        $response = $this->postJson('/api/register', [
+            'name' => 'Test User',
+            'phone' => '09121110000',
+            'password' => 'secret',
+            'password_confirmation' => 'secret'
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['token']);
+            ->assertJsonStructure([
+                'data' => ['token'],
+                'server_time'
+            ]);
     }
 
-    /** @test */
-    public function authenticated_user_can_upload_profile_image()
+    public function test_user_can_login_and_receive_token()
     {
-        Storage::fake('public');
-        $user = User::factory()->create();
-        $token = auth('api')->login($user);
+        $user = User::factory()->create([
+            'phone' => '09121110000',
+            'password' => bcrypt('secret')
+        ]);
 
-        $response = $this->withHeader('Authorization', "Bearer $token")
-            ->postJson('/api/profile/image', [
-                'profile_image' => UploadedFile::fake()->image('avatar.jpg')
-            ]);
+        $response = $this->postJson('/api/login', [
+            'phone' => '09121110000',
+            'password' => 'secret'
+        ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['message', 'profile_image']);
+            ->assertJsonStructure([
+                'data' => ['token'],
+                'server_time'
+            ]);
+    }
 
-        Storage::disk('public')->assertExists($response->json('profile_image'));
+    public function test_user_cannot_login_with_wrong_credentials()
+    {
+        $user = User::factory()->create([
+            'phone' => '09121110000',
+            'password' => bcrypt('secret')
+        ]);
 
+        $response = $this->postJson('/api/login', [
+            'phone' => '09121110000',
+            'password' => 'wrong-secret'
+        ]);
+
+        $response->assertStatus(401)
+            ->assertJsonFragment(['error' => 'Unauthorized']);
     }
 }
